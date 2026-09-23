@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { overflow-x: hidden; }
+
+/* Prevent iOS Safari from auto-zooming into inputs on focus (inputs need >=16px font-size).
+   !important overrides Tailwind's text-sm/text-xs utilities used on some inputs. */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+.status-badge {
+  @apply inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold;
+}
+
+/* Respect the iPhone home-indicator / notch safe areas */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}

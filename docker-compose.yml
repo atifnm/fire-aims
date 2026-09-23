@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fireaims
+      POSTGRES_PASSWORD: fireaims
+      POSTGRES_DB: fireaims
+    volumes:
+      - fireaims_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fireaims"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg2://fireaims:fireaims@db:5432/fireaims
+      SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
+      ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - fireaims_static:/app/static
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # The browser (running on the host machine, not inside Docker) is what actually calls
+        # this URL, so it has to be the backend's host-mapped port above (localhost:8000), not
+        # a Docker-internal service name like "backend" — nginx no longer proxies /api itself,
+        # since that only worked inside docker-compose's private network and broke on any host
+        # (like Railway) where each service is a separate container with no shared network.
+        VITE_API_URL: http://localhost:8000
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  fireaims_pgdata:
+  fireaims_static:
